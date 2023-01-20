@@ -1,27 +1,24 @@
 import therapist from "../data/therapistDummy.json" assert { type: "json" };
 import asyncHandler from "express-async-handler";
-import therapistModel from "../model/therapistModel.js";
+
+import { userModel } from "../model/userModel.js";
 const getTherapistDummy = asyncHandler(async (req, res) => {
   res.json(therapist);
 });
 const getTherapist = asyncHandler(async (req, res) => {
-  const therapists = await therapistModel.find();
+  const therapists = await userModel.find({ role: "therapist" });
   res.json(therapists);
 });
-const setTherapist = asyncHandler(async (req, res) => {
-  const newTherapist = await therapistModel.create({
-    text: req.body.text,
-  });
-
-  res.json(newTherapist);
-});
 export const updateTherapist = asyncHandler(async (req, res) => {
-  const update = await therapistModel.findById(req.params.id);
+  const update = await userModel.find({
+    _id: req.params.id,
+    role: "therapist",
+  });
   if (!update) {
     res.status(500);
     throw new Error("therapist not found");
   }
-  const updatedTherapist = await therapistModel.findByIdAndUpdate(
+  const updatedTherapist = await userModel.findByIdAndUpdate(
     req.params.id,
     req.body,
     { new: true }
@@ -29,7 +26,15 @@ export const updateTherapist = asyncHandler(async (req, res) => {
   res.json(updatedTherapist);
 });
 export const deleteTherapist = asyncHandler(async (req, res) => {
-  const therapist = await therapistModel.findById(req.params.id);
-  res.json({ message: `therapist deleted ${req.params.id}` });
+  const therapist = await userModel.findOne({
+    _id: req.params.id,
+    role: "therapist",
+  });
+  if (!therapist) {
+    res.status(500);
+    throw new Error("therapist not found");
+  }
+  const deletedTherapist = await userModel.findByIdAndDelete(req.params.id);
+  res.json({ deletedTherapist, message: `therapist deleted ${req.params.id}` });
 });
-export { getTherapistDummy, getTherapist, setTherapist };
+export { getTherapistDummy, getTherapist };

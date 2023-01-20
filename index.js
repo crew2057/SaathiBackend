@@ -19,7 +19,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use("/api/user", userRoute);
+app.use("/user", userRoute);
 app.use("/therapist", therapistRoute);
 app.use(errorHandler);
 app.listen(port, () => {

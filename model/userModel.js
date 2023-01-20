@@ -47,21 +47,4 @@ const userSchema = mongoose.Schema({
   therapistDetails: [therapistDetailSchema],
 });
 
-// "username": "lalBahadur",
-// "age": 50,
-// "email": "lalala@gmail.com",
-// "gender": "male/female/other",
-// "phoneNo": 9805883666,
-// "address": "kathmandu,bashundhara",
-// "role": "user",
-// "userDetails": [{}],
-// "therapistDetails": [
-//   {
-//     "speciality": "",
-//     "communicationType": "",
-//     "ageGroup": "",
-//     "PrefferedGender": "",
-//     "PrefferedCulture": ""
-//   }
-// ]
 export const userModel = mongoose.model("User", userSchema);
