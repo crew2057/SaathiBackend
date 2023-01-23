@@ -7,6 +7,7 @@ import { router as therapistRoute } from "./routes/therapistRoute.js";
 import "dotenv/config.js";
 
 import { connectDB } from "./config/db.js";
+import { login } from "./controller/userController.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -20,6 +21,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/user", userRoute);
+app.post("/login", login);
 app.use("/therapist", therapistRoute);
 app.use(errorHandler);
 app.listen(port, () => {

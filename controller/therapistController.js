@@ -14,9 +14,14 @@ export const updateTherapist = asyncHandler(async (req, res) => {
     _id: req.params.id,
     role: "therapist",
   });
+  const user = await userModel.findById(req.user.id);
   if (!update) {
     res.status(500);
     throw new Error("therapist not found");
+  }
+  if (update.id.toString() !== user.id) {
+    res.status(401);
+    throw new Error("User not authorized");
   }
   const updatedTherapist = await userModel.findByIdAndUpdate(
     req.params.id,
@@ -30,9 +35,14 @@ export const deleteTherapist = asyncHandler(async (req, res) => {
     _id: req.params.id,
     role: "therapist",
   });
+  const user = await userModel.findById(req.user.id);
   if (!therapist) {
     res.status(500);
     throw new Error("therapist not found");
+  }
+  if (therapist.id.toString() !== user.id) {
+    res.status(401);
+    throw new Error("User not authorized");
   }
   const deletedTherapist = await userModel.findByIdAndDelete(req.params.id);
   res.json({ deletedTherapist, message: `therapist deleted ${req.params.id}` });
