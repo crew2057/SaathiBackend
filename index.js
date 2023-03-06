@@ -7,7 +7,7 @@ import { router as therapistRoute } from "./routes/therapistRoute.js";
 import "dotenv/config.js";
 
 import { connectDB } from "./config/db.js";
-import { login } from "./controller/userController.js";
+import { login } from "./controller/loginController.js";
 
 const app = express();
 const port = process.env.PORT || 5000;

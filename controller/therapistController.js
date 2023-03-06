@@ -2,8 +2,25 @@ import therapist from "../data/therapistDummy.json" assert { type: "json" };
 import asyncHandler from "express-async-handler";
 
 import { userModel } from "../model/userModel.js";
+//therapist id = id, user id =userId
+
 const getTherapistDummy = asyncHandler(async (req, res) => {
   res.json(therapist);
+});
+
+export const getAssignedUsers = asyncHandler(async (req, res) => {
+  let therapist = await userModel.findById(req.params.id);
+  if (!therapist) {
+    res.status(400);
+  }
+  console.log(therapist);
+  const users = therapist.usersAssigned.map((user) => {
+    return userModel.findById(user);
+  });
+
+  Promise.all(users).then((data) => {
+    res.json({ users: data });
+  });
 });
 const getTherapist = asyncHandler(async (req, res) => {
   const therapists = await userModel.find({ role: "therapist" });

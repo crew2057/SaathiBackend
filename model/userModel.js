@@ -1,16 +1,21 @@
 import mongoose from "mongoose";
 const therapistDetailSchema = mongoose.Schema({
+  age: String,
   speciality: {
     type: String,
   },
   communicationType: {
     type: String,
-    enum: ["virtual", "physical"],
+    enum: ["Virtual", "Physical", "Any"],
   },
-  prefferedGender: {
+  gender: {
     type: String,
-    enum: ["male", "female", "other"],
+    enum: ["Male", "Female", "Other", "Any"],
   },
+});
+const questionSchema = mongoose.Schema({
+  question: String,
+  answer: String,
 });
 const userSchema = mongoose.Schema({
   username: {
@@ -50,8 +55,12 @@ const userSchema = mongoose.Schema({
   },
   password: {
     type: String,
+    required: [true, "Please give password"],
   },
-  therapistDetails: [therapistDetailSchema],
+  userInfo: [questionSchema],
+  therapistAssigned: String,
+  therapistDetails: therapistDetailSchema,
+  usersAssigned: [String],
 });
 
 export const userModel = mongoose.model("User", userSchema);
