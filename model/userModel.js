@@ -13,9 +13,23 @@ const therapistDetailSchema = mongoose.Schema({
     enum: ["Male", "Female", "Other", "Any"],
   },
 });
-const questionSchema = mongoose.Schema({
-  question: String,
-  answer: String,
+
+const symptoms = mongoose.Schema({
+  behaviour: Number,
+  sleep: Number,
+  apetite: Number,
+  concentration: Number,
+  physical: Number,
+  substanceUse: Number,
+  suicidal: Number,
+  hallucinations: Number,
+  anxiety: Number,
+  ocd: Number,
+  ptsd: Number,
+  eatingDisorder: Number,
+  personalityDisorder: Number,
+  psychoticDisorder: Number,
+  sexualDisorder: Number,
 });
 const userSchema = mongoose.Schema({
   username: {
@@ -43,11 +57,9 @@ const userSchema = mongoose.Schema({
   },
   phoneno: {
     type: Number,
-    required: [true, "please state your  phone number"],
   },
   address: {
     type: String,
-    required: [true, "please state your address"],
   },
   role: {
     type: String,
@@ -57,7 +69,8 @@ const userSchema = mongoose.Schema({
     type: String,
     required: [true, "Please give password"],
   },
-  userInfo: [questionSchema],
+
+  userSymptoms: symptoms,
   therapistAssigned: String,
   therapistDetails: therapistDetailSchema,
   usersAssigned: [String],

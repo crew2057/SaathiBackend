@@ -1,4 +1,3 @@
-import user from "../data/userDummy.json" assert { type: "json" };
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import { userModel } from "../model/userModel.js";
@@ -35,7 +34,7 @@ export const AssignTherapist = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error("Therapist not found");
   }
-  console.log(assignedTherapist._id);
+
   const updatedUser = await userModel.findByIdAndUpdate(
     req.body.id,
     {
@@ -225,11 +224,11 @@ export const RecommendTherapist = asyncHandler(async (req, res) => {
     "therapistDetails.speciality": userNeeds.speciality,
   });
 
-  if (!(therapist.length > 0)) {
+  if (!therapist.length) {
     let relatedTherapist = await Related(userNeeds.speciality);
-    if (relatedTherapist.length > 0) {
+
+    if (relatedTherapist) {
       therapist = relatedTherapist;
-      console.log(therapist);
     } else {
       res.status(400);
       res.json({ message: "therapist not found" });
@@ -242,7 +241,7 @@ export const RecommendTherapist = asyncHandler(async (req, res) => {
     return t.gender === userNeeds.gender.toLowerCase();
   });
   let ageFilteredTherapist;
-  if (genderFilteredTherapist.length > 0) {
+  if (genderFilteredTherapist) {
     ageFilteredTherapist = genderFilteredTherapist.filter((t) => {
       switch (userNeeds.age) {
         case "Old(Above 40)":

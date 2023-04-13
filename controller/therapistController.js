@@ -1,4 +1,3 @@
-import therapist from "../data/therapistDummy.json" assert { type: "json" };
 import asyncHandler from "express-async-handler";
 
 import { userModel } from "../model/userModel.js";
@@ -13,12 +12,12 @@ export const getAssignedUsers = asyncHandler(async (req, res) => {
   if (!therapist) {
     res.status(400);
   }
-  console.log(therapist);
-  const users = therapist.usersAssigned.map((user) => {
-    return userModel.findById(user);
+
+  const users = therapist.usersAssigned.map(async (user) => {
+    return await userModel.findById(user);
   });
 
-  Promise.all(users).then((data) => {
+  Promise.all([...users]).then((data) => {
     res.json({ users: data });
   });
 });
