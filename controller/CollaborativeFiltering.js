@@ -17,14 +17,13 @@ export const collaborative = asyncHandler(async (req, res) => {
   const userNeedObject = user.therapistDetails.toObject();
   const userSymptoms = user.userSymptoms.toObject();
   delete userSymptoms["_id"];
+  delete userNeedObject["_id"];
 
-  const userNeeds = Object.keys(userNeedObject).filter((val, index) => {
-    return val !== "_id";
+  const userNeedsVector = Object.values(userNeedObject).map((val, index) => {
+    if (val === "Any") return 1;
+    return 0;
   });
-  const userNeedsVector = Object.values(userNeeds).map((val, index) => {
-    if (val === "Any") return 0;
-    return 1;
-  });
+  console.log(userNeedsVector);
 
   // Age,gender,medium,speciality
   const therapists = await userModel.find({
@@ -82,6 +81,13 @@ export const collaborative = asyncHandler(async (req, res) => {
         : vector.push(0);
     }
 
+    if (userNeedsVector[3] !== 0) {
+      therapist.therapistDetails.communicationType ===
+      user.therapistDetails.communicationType
+        ? vector.push(1)
+        : vector.push(0);
+    }
+
     const similarity = cosineSimilarity(vector, userNeedsVector);
     if (similarity > maxSimilarity) {
       maxSimilarity = similarity;
@@ -111,7 +117,7 @@ export const collaborative = asyncHandler(async (req, res) => {
           Object.values(userSymptoms)
         );
 
-        if (similarity > 0.5) {
+        if (similarity > 0.8) {
           similarUsers.push(use);
         }
       }
@@ -188,17 +194,65 @@ export const collaborative = asyncHandler(async (req, res) => {
         ? vector.push(1)
         : vector.push(0);
     }
+    if (userNeedsVector[3] !== 0) {
+      therapist.therapistDetails.communicationType ===
+      user.therapistDetails.communicationType
+        ? vector.push(1)
+        : vector.push(0);
+    }
     return { vector: vector, therapist: therapist };
   });
-  let neededTherapist;
-  let newMaxSimilarity = -1;
-  similarTherapists.forEach((similar) => {
-    const similarity = cosineSimilarity(similar.vector, bestTherapistVector);
-    if (similarity > newMaxSimilarity) {
-      newMaxSimilarity = similarity;
-      neededTherapist = similar.therapist;
+  let neededTherapist = [];
+  let similarityArray = [];
+  let uniqueSimilarTherapists = [];
+  for (let i = 0; i <= similarTherapists.length - 1; i++) {
+    let clone = false;
+    for (let j = 0; j < uniqueSimilarTherapists.length; j++) {
+      if (
+        similarTherapists[i].therapist.email ===
+        similarTherapists[j].therapist.email
+      ) {
+        clone = true;
+      }
     }
+    if (similarTherapists[i].therapist.email === bestTherapist.email) {
+      clone = true;
+    }
+    if (!clone) {
+      uniqueSimilarTherapists.push(similarTherapists[i]);
+    }
+  }
+  uniqueSimilarTherapists.forEach((similar) => {
+    const similarity = cosineSimilarity(similar.vector, bestTherapistVector);
+
+    similarityArray.push({
+      similarity: similarity,
+      therapist: similar.therapist,
+    });
   });
+
+  //find median  therapist .
+  function swap(arr, xp, yp) {
+    var temp = arr[xp];
+    arr[xp] = arr[yp];
+    arr[yp] = temp;
+  }
+  for (let i = 0; i <= similarityArray.length - 1; i++) {
+    for (let j = 0; j < similarityArray.length - i - 1; j++) {
+      if (similarityArray[j].similarity > similarityArray[j + 1].similarity) {
+        swap(similarityArray, j, j + 1);
+      }
+    }
+  }
+
+  for (
+    let i = Math.floor(similarityArray.length / 2);
+    i <= similarityArray.length - 1;
+    i++
+  ) {
+    neededTherapist.push(similarityArray[i].therapist);
+  }
+
   if (neededTherapist !== undefined) {
     res.json({
       therapistToOurPreferences: bestTherapist,

@@ -11,7 +11,7 @@ export const login = asyncHandler(async (req, res) => {
     res.status(200);
     res.json({ id: user._id, token: generateToken(user._id) });
   } else {
-    res.status(500);
+    res.status(400);
     throw new Error("Please enter valid credentials");
   }
 });
