@@ -20,10 +20,8 @@ export const collaborative = asyncHandler(async (req, res) => {
   delete userNeedObject["_id"];
 
   const userNeedsVector = Object.values(userNeedObject).map((val, index) => {
-    if (val === "Any") return 1;
-    return 0;
+    return 1;
   });
-  console.log(userNeedsVector);
 
   // Age,gender,medium,speciality
   const therapists = await userModel.find({
@@ -38,63 +36,81 @@ export const collaborative = asyncHandler(async (req, res) => {
   let maxSimilarity = -1;
   let bestTherapist; //according to our liking
   let bestTherapistVector = [];
+  let similarTherapistArray = [];
   therapists.forEach((therapist) => {
     let vector = [];
     // for age
-    if (userNeedsVector[0] !== 0) {
-      switch (user.therapistDetails.age) {
-        case "Old(Above 40)":
-          if (therapist.age > 40) vector.push(1);
-          else vector.push(0);
-          break;
 
-        case "Adult(Between 30-40)":
-          if (therapist.age >= 30 && therapist.age <= 40) vector.push(1);
-          else vector.push(0);
-          break;
+    switch (user.therapistDetails.age) {
+      case "Old(Above 40)":
+        if (therapist.age > 40) vector.push(1);
+        else vector.push(0);
+        break;
 
-        case "YoungAdult(Between 20-30)":
-          if (therapist.age >= 20 && therapist.age >= 30) vector.push(1);
-          else vector.push(0);
-          break;
+      case "Adult(Between 30-40)":
+        if (therapist.age >= 30 && therapist.age <= 40) vector.push(1);
+        else vector.push(0);
+        break;
 
-        case "Any":
-          vector.push(1);
-          break;
-      }
-    } else {
-      vector.push(1);
+      case "YoungAdult(Between 20-30)":
+        if (therapist.age >= 20 && therapist.age >= 30) vector.push(1);
+        else vector.push(0);
+        break;
+
+      case "Any":
+        vector.push(1);
+        break;
     }
 
     //for gender
     if (userNeedsVector[1] !== 0) {
-      therapist.gender === user.therapistDetails.gender.toLowerCase()
+      user.therapistDetails.gender.toLowerCase() === "any"
         ? vector.push(1)
-        : vector.push(0);
-    } else {
-      vector.push(1);
-    }
-
-    if (userNeedsVector[2] !== 0) {
-      therapist.therapistDetails.speciality === user.therapistDetails.speciality
+        : therapist.gender === user.therapistDetails.gender.toLowerCase()
         ? vector.push(1)
         : vector.push(0);
     }
 
-    if (userNeedsVector[3] !== 0) {
-      therapist.therapistDetails.communicationType ===
-      user.therapistDetails.communicationType
-        ? vector.push(1)
-        : vector.push(0);
-    }
+    user.therapistDetails.speciality === "Any"
+      ? vector.push(1)
+      : therapist.therapistDetails.speciality ===
+        user.therapistDetails.speciality
+      ? vector.push(1)
+      : vector.push(0);
 
-    const similarity = cosineSimilarity(vector, userNeedsVector);
-    if (similarity > maxSimilarity) {
-      maxSimilarity = similarity;
-      bestTherapist = therapist;
-      bestTherapistVector = [...vector];
+    user.therapistDetails.communicationType === "Any"
+      ? vector.push(1)
+      : therapist.therapistDetails.communicationType ===
+        user.therapistDetails.communicationType
+      ? vector.push(1)
+      : vector.push(0);
+
+    if (
+      !(
+        vector[0] === 0 &&
+        vector[1] === 0 &&
+        vector[2] === 0 &&
+        vector[3] === 0
+      )
+    ) {
+      const similarity = cosineSimilarity(vector, userNeedsVector);
+      if (similarity > maxSimilarity) {
+        similarTherapistArray = [];
+        maxSimilarity = similarity;
+        bestTherapist = therapist;
+        bestTherapistVector = [...vector];
+      }
+      if (similarity === maxSimilarity) {
+        similarTherapistArray.push(therapist);
+      }
     }
   });
+  if (similarTherapistArray.length > 0) {
+    bestTherapist =
+      similarTherapistArray[
+        Math.floor(Math.random() * similarTherapistArray.length)
+      ];
+  }
 
   if (bestTherapist === undefined) {
     res.status(400);
@@ -144,7 +160,6 @@ export const collaborative = asyncHandler(async (req, res) => {
       return await userModel.findById(Id);
     })
   );
-
   if (!(therapistsSimilar.length > 0)) {
     res.json({
       message:
@@ -155,51 +170,51 @@ export const collaborative = asyncHandler(async (req, res) => {
   const similarTherapists = therapistsSimilar.map((therapist) => {
     let vector = [];
     // for age
-    if (userNeedsVector[0] !== 0) {
-      switch (user.therapistDetails.age) {
-        case "Old(Above 40)":
-          if (therapist.age > 40) vector.push(1);
-          else vector.push(0);
-          break;
 
-        case "Adult(Between 30-40)":
-          if (therapist.age >= 30 && therapist.age <= 40) vector.push(1);
-          else vector.push(0);
-          break;
+    switch (user.therapistDetails.age) {
+      case "Old(Above 40)":
+        if (therapist.age > 40) vector.push(1);
+        else vector.push(0);
+        break;
 
-        case "YoungAdult(Between 20-30)":
-          if (therapist.age >= 20 && therapist.age >= 30) vector.push(1);
-          else vector.push(0);
-          break;
+      case "Adult(Between 30-40)":
+        if (therapist.age >= 30 && therapist.age <= 40) vector.push(1);
+        else vector.push(0);
+        break;
 
-        case "Any":
-          vector.push(1);
-          break;
-      }
-    } else {
-      vector.push(1);
+      case "YoungAdult(Between 20-30)":
+        if (therapist.age >= 20 && therapist.age >= 30) vector.push(1);
+        else vector.push(0);
+        break;
+
+      case "Any":
+        vector.push(1);
+        break;
     }
 
     //for gender
     if (userNeedsVector[1] !== 0) {
-      therapist.gender === user.therapistDetails.gender.toLowerCase()
+      user.therapistDetails.gender.toLowerCase() === "any"
+        ? vector.push(1)
+        : therapist.gender === user.therapistDetails.gender.toLowerCase()
         ? vector.push(1)
         : vector.push(0);
-    } else {
-      vector.push(1);
     }
 
-    if (userNeedsVector[2] !== 0) {
-      therapist.therapistDetails.speciality === user.therapistDetails.speciality
-        ? vector.push(1)
-        : vector.push(0);
-    }
-    if (userNeedsVector[3] !== 0) {
-      therapist.therapistDetails.communicationType ===
-      user.therapistDetails.communicationType
-        ? vector.push(1)
-        : vector.push(0);
-    }
+    user.therapistDetails.speciality === "Any"
+      ? vector.push(1)
+      : therapist.therapistDetails.speciality ===
+        user.therapistDetails.speciality
+      ? vector.push(1)
+      : vector.push(0);
+
+    user.therapistDetails.communicationType === "Any"
+      ? vector.push(1)
+      : therapist.therapistDetails.communicationType ===
+        user.therapistDetails.communicationType
+      ? vector.push(1)
+      : vector.push(0);
+
     return { vector: vector, therapist: therapist };
   });
   let neededTherapist = [];
