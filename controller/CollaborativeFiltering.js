@@ -275,3 +275,5 @@ export const collaborative = asyncHandler(async (req, res) => {
     });
   }
 });
+
+export const blogRecommend = asyncHandler(async (req, res) => {});

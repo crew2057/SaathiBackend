@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import { userModel } from "../model/userModel.js";
+import { generateToken } from "./loginController.js";
 
 //method get
 //needs user id in request body
@@ -332,7 +333,13 @@ export const setUser = asyncHandler(async (req, res) => {
     ...req.body,
     password: hashedPassword,
   });
-  res.json({ createdUser, role });
+
+  res.json({
+    createdUser,
+    role,
+    id: createdUser._id,
+    token: generateToken(createdUser._id),
+  });
 });
 
 export const getUserByID = asyncHandler(async (req, res) => {

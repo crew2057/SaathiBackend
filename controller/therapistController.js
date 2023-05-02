@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 
 import { userModel } from "../model/userModel.js";
+import { blogModel } from "../model/blogModel.js";
 //therapist id = id, user id =userId
 
 const getTherapistDummy = asyncHandler(async (req, res) => {
@@ -63,4 +64,6 @@ export const deleteTherapist = asyncHandler(async (req, res) => {
   const deletedTherapist = await userModel.findByIdAndDelete(req.params.id);
   res.json({ deletedTherapist, message: `therapist deleted ${req.params.id}` });
 });
+
+export const getTherapistBlogs = asyncHandler(async (req, res) => {});
 export { getTherapistDummy, getTherapist };

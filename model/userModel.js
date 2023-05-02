@@ -69,7 +69,7 @@ const userSchema = mongoose.Schema({
     type: String,
     required: [true, "Please give password"],
   },
-
+  likedBlogs: [String],
   userSymptoms: symptoms,
   therapistAssigned: String,
   therapistDetails: therapistDetailSchema,
