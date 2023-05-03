@@ -49,7 +49,17 @@ export const postBlog = asyncHandler(async (req, res) => {
   });
   res.json({ message: "blog created" });
 });
-export const deleteBlog = asyncHandler(async (req, res) => {});
+export const deleteBlog = asyncHandler(async (req, res) => {
+  // const user = await blogModel.findById(req.user.id);
+  // if (!user) {
+  //   throw new Error("User doesnot exist ");
+  // }
+  // if (deleted.id.toString() !== user.id) {
+  //   throw new Error("User not authorized");
+  // }
+  const deletedBlog = await blogModel.findByIdAndDelete(req.params.id);
+  res.json({ deletedBlog, message: `blog deleted ${req.params.id}` });
+});
 
 export const updateBlog = asyncHandler(async (req, res) => {});
 

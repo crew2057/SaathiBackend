@@ -14,6 +14,6 @@ const router = express.Router();
 router.route("/").get(getAllBlogs).post(postBlog);
 router.get("/:id", getBlogById);
 router.put("/likes/", updateLikeCount);
-router.route("/:id").put(protect, updateBlog).delete(protect, deleteBlog);
+router.route("/:id").put(protect, updateBlog).delete(deleteBlog);
 
 export { router };
