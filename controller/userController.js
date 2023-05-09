@@ -52,6 +52,38 @@ export const AssignTherapist = asyncHandler(async (req, res) => {
   );
   res.json({ updatedTherapist, message: "Therapist assigned" });
 });
+export const unAssignTherapist = asyncHandler(async (req, res) => {
+  const user = await userModel.findById(req.body.id);
+  if (!user) {
+    res.status(500);
+    throw new Error("Invalid request");
+  }
+  const assignedTherapist = await userModel.findById(user.therapistAssigned);
+  if (!assignedTherapist) {
+    res.status(403);
+    throw new Error("Therapist not found");
+  }
+
+  const updatedUser = await userModel.findByIdAndUpdate(
+    req.body.id,
+    {
+      therapistAssigned: "",
+    },
+    { new: true }
+  );
+  const updatedTherapist = await userModel.findByIdAndUpdate(
+    user.therapistAssigned,
+    {
+      usersAssigned: [
+        ...assignedTherapist.usersAssigned.filter((therapist) => {
+          return therapist !== req.body.id;
+        }),
+      ],
+    },
+    { new: true }
+  );
+  res.json({ updatedTherapist, message: "Therapist unAssigned" });
+});
 
 //find related therapist speciality
 // "Family"---"Divorce"5,"Child"4,"Trauma"3,"Social"2,"Behaviour"1,

@@ -48,12 +48,12 @@ export const collaborative = asyncHandler(async (req, res) => {
         break;
 
       case "Adult(Between 30-40)":
-        if (therapist.age >= 30 && therapist.age <= 40) vector.push(1);
+        if (therapist.age > 30 && therapist.age <= 40) vector.push(1);
         else vector.push(0);
         break;
 
       case "YoungAdult(Between 20-30)":
-        if (therapist.age >= 20 && therapist.age >= 30) vector.push(1);
+        if (therapist.age >= 20 && therapist.age <= 30) vector.push(1);
         else vector.push(0);
         break;
 
@@ -80,6 +80,8 @@ export const collaborative = asyncHandler(async (req, res) => {
 
     user.therapistDetails.communicationType === "Any"
       ? vector.push(1)
+      : therapist.therapistDetails.communicationType === "Any"
+      ? vector.push(1)
       : therapist.therapistDetails.communicationType ===
         user.therapistDetails.communicationType
       ? vector.push(1)
@@ -94,22 +96,22 @@ export const collaborative = asyncHandler(async (req, res) => {
       )
     ) {
       const similarity = cosineSimilarity(vector, userNeedsVector);
+
       if (similarity > maxSimilarity) {
         similarTherapistArray = [];
         maxSimilarity = similarity;
-        bestTherapist = therapist;
+        bestTherapist = [therapist];
         bestTherapistVector = [...vector];
       }
+
       if (similarity === maxSimilarity) {
         similarTherapistArray.push(therapist);
       }
     }
   });
+
   if (similarTherapistArray.length > 0) {
-    bestTherapist =
-      similarTherapistArray[
-        Math.floor(Math.random() * similarTherapistArray.length)
-      ];
+    bestTherapist = [...similarTherapistArray];
   }
 
   if (bestTherapist === undefined) {
@@ -144,135 +146,157 @@ export const collaborative = asyncHandler(async (req, res) => {
     res.json({
       message:
         "There are no similar users to the current user so recommending with users preferences",
-      therapist: bestTherapist,
-    });
-  }
-  const similarUserTIds = similarUsers
-    .filter((use) => {
-      return use.therapistAssigned;
-    })
-    .map((use) => {
-      return use.therapistAssigned;
-    });
-
-  const therapistsSimilar = await Promise.all(
-    similarUserTIds.map(async (Id) => {
-      return await userModel.findById(Id);
-    })
-  );
-  if (!(therapistsSimilar.length > 0)) {
-    res.json({
-      message:
-        "therapists are not asssigned to the similar users so recommending with users own preferences",
-      therapist: bestTherapist,
-    });
-  }
-  const similarTherapists = therapistsSimilar.map((therapist) => {
-    let vector = [];
-    // for age
-
-    switch (user.therapistDetails.age) {
-      case "Old(Above 40)":
-        if (therapist.age > 40) vector.push(1);
-        else vector.push(0);
-        break;
-
-      case "Adult(Between 30-40)":
-        if (therapist.age >= 30 && therapist.age <= 40) vector.push(1);
-        else vector.push(0);
-        break;
-
-      case "YoungAdult(Between 20-30)":
-        if (therapist.age >= 20 && therapist.age >= 30) vector.push(1);
-        else vector.push(0);
-        break;
-
-      case "Any":
-        vector.push(1);
-        break;
-    }
-
-    //for gender
-    if (userNeedsVector[1] !== 0) {
-      user.therapistDetails.gender.toLowerCase() === "any"
-        ? vector.push(1)
-        : therapist.gender === user.therapistDetails.gender.toLowerCase()
-        ? vector.push(1)
-        : vector.push(0);
-    }
-
-    user.therapistDetails.speciality === "Any"
-      ? vector.push(1)
-      : therapist.therapistDetails.speciality ===
-        user.therapistDetails.speciality
-      ? vector.push(1)
-      : vector.push(0);
-
-    user.therapistDetails.communicationType === "Any"
-      ? vector.push(1)
-      : therapist.therapistDetails.communicationType ===
-        user.therapistDetails.communicationType
-      ? vector.push(1)
-      : vector.push(0);
-
-    return { vector: vector, therapist: therapist };
-  });
-  let neededTherapist = [];
-  let similarityArray = [];
-  let uniqueSimilarTherapists = [];
-  for (let i = 0; i <= similarTherapists.length - 1; i++) {
-    let clone = false;
-    for (let j = 0; j < uniqueSimilarTherapists.length; j++) {
-      if (
-        similarTherapists[i].therapist.email ===
-        similarTherapists[j].therapist.email
-      ) {
-        clone = true;
-      }
-    }
-    if (similarTherapists[i].therapist.email === bestTherapist.email) {
-      clone = true;
-    }
-    if (!clone) {
-      uniqueSimilarTherapists.push(similarTherapists[i]);
-    }
-  }
-  uniqueSimilarTherapists.forEach((similar) => {
-    const similarity = cosineSimilarity(similar.vector, bestTherapistVector);
-
-    similarityArray.push({
-      similarity: similarity,
-      therapist: similar.therapist,
-    });
-  });
-
-  //find median  therapist .
-  function swap(arr, xp, yp) {
-    var temp = arr[xp];
-    arr[xp] = arr[yp];
-    arr[yp] = temp;
-  }
-  for (let i = 0; i <= similarityArray.length - 1; i++) {
-    for (let j = 0; j < similarityArray.length - i - 1; j++) {
-      if (similarityArray[j].similarity > similarityArray[j + 1].similarity) {
-        swap(similarityArray, j, j + 1);
-      }
-    }
-  }
-
-  for (
-    let i = Math.floor(similarityArray.length / 2);
-    i <= similarityArray.length - 1;
-    i++
-  ) {
-    neededTherapist.push(similarityArray[i].therapist);
-  }
-
-  if (neededTherapist !== undefined) {
-    res.json({
       therapistToOurPreferences: bestTherapist,
-      therapistFromSymptoms: neededTherapist,
     });
+  } else {
+    const similarUserTIds = similarUsers
+      .filter((use) => {
+        return use.therapistAssigned !== undefined;
+      })
+      .map((use) => {
+        return use.therapistAssigned;
+      });
+
+    if (!(similarUserTIds.length > 0)) {
+      res.json({
+        message:
+          "There are no Therapists assigned to  users similar to the current user so recommending with users preferences",
+        therapistToOurPreferences: bestTherapist,
+      });
+    } else {
+      const therapistsSimilar = await Promise.all(
+        similarUserTIds
+          .filter((id) => {
+            return id !== "";
+          })
+          .map(async (Id) => {
+            return await userModel.findById(Id);
+          })
+      );
+
+      if (!(therapistsSimilar.length > 0)) {
+        res.status(202);
+        res.json({
+          message:
+            "therapists are not asssigned to the similar users so recommending with users own preferences",
+          therapistToOurPreferences: bestTherapist,
+        });
+      } else {
+        const similarTherapists = therapistsSimilar.map((therapist) => {
+          let vector = [];
+          // for age
+
+          switch (user.therapistDetails.age) {
+            case "Old(Above 40)":
+              if (therapist.age > 40) vector.push(1);
+              else vector.push(0);
+              break;
+
+            case "Adult(Between 30-40)":
+              if (therapist.age > 30 && therapist.age <= 40) vector.push(1);
+              else vector.push(0);
+              break;
+
+            case "YoungAdult(Between 20-30)":
+              if (therapist.age >= 20 && therapist.age <= 30) vector.push(1);
+              else vector.push(0);
+              break;
+
+            case "Any":
+              vector.push(1);
+              break;
+          }
+
+          //for gender
+          if (userNeedsVector[1] !== 0) {
+            user.therapistDetails.gender.toLowerCase() === "any"
+              ? vector.push(1)
+              : therapist.gender === user.therapistDetails.gender.toLowerCase()
+              ? vector.push(1)
+              : vector.push(0);
+          }
+
+          user.therapistDetails.speciality === "Any"
+            ? vector.push(1)
+            : therapist.therapistDetails.speciality ===
+              user.therapistDetails.speciality
+            ? vector.push(1)
+            : vector.push(0);
+
+          user.therapistDetails.communicationType === "Any"
+            ? vector.push(1)
+            : therapist.therapistDetails.communicationType === "Any"
+            ? vector.push(1)
+            : therapist.therapistDetails.communicationType ===
+              user.therapistDetails.communicationType
+            ? vector.push(1)
+            : vector.push(0);
+          return { vector: vector, therapist: therapist };
+        });
+        let neededTherapist = [];
+        let similarityArray = [];
+        let uniqueSimilarTherapists = [];
+        for (let i = 0; i <= similarTherapists.length - 1; i++) {
+          let clone = false;
+          for (let j = 0; j < uniqueSimilarTherapists.length; j++) {
+            if (
+              similarTherapists[i].therapist.email ===
+              similarTherapists[j].therapist.email
+            ) {
+              clone = true;
+            }
+          }
+          if (similarTherapists[i].therapist.email === bestTherapist.email) {
+            clone = true;
+          }
+          if (!clone) {
+            uniqueSimilarTherapists.push(similarTherapists[i]);
+          }
+        }
+        uniqueSimilarTherapists.forEach((similar) => {
+          const similarity = cosineSimilarity(
+            similar.vector,
+            bestTherapistVector
+          );
+
+          similarityArray.push({
+            similarity: similarity,
+            therapist: similar.therapist,
+          });
+        });
+
+        //find median  therapist .
+        function swap(arr, xp, yp) {
+          var temp = arr[xp];
+          arr[xp] = arr[yp];
+          arr[yp] = temp;
+        }
+        for (let i = 0; i <= similarityArray.length - 1; i++) {
+          for (let j = 0; j < similarityArray.length - i - 1; j++) {
+            if (
+              similarityArray[j].similarity > similarityArray[j + 1].similarity
+            ) {
+              swap(similarityArray, j, j + 1);
+            }
+          }
+        }
+
+        for (
+          let i = Math.floor(similarityArray.length / 2);
+          i <= similarityArray.length - 1;
+          i++
+        ) {
+          neededTherapist.push(similarityArray[i].therapist);
+        }
+
+        if (neededTherapist !== undefined) {
+          res.json({
+            therapistToOurPreferences: bestTherapist,
+            therapistFromSymptoms: neededTherapist,
+          });
+        }
+      }
+    }
   }
 });
 

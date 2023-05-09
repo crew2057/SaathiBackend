@@ -10,6 +10,7 @@ import {
   RecommendTherapist,
   getAssignedTherapist,
   AssignTherapist,
+  unAssignTherapist,
 } from "../controller/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
@@ -17,6 +18,7 @@ router.get("/dummy", getUserDummy);
 
 router.get("/therapist/:id", getAssignedTherapist);
 router.post("/assign", AssignTherapist);
+router.post("/unassign", unAssignTherapist);
 router.get("/recommend/:id", RecommendTherapist);
 router.get("/recommendByAlgo/:id", collaborative);
 router.route("/").get(getUser).post(setUser);
