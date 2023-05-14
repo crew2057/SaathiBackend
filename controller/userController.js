@@ -353,32 +353,34 @@ export const setUser = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, salt);
   const user = await userModel.findOne({ email });
   if (user) {
-    throw new Error("user already exists");
-  }
-  if (role === "therapist") {
-    if (!fullName) {
-      res.status(403);
-      throw new Error("enter full name");
+    res.status(400);
+    res.json({ message: "user already exists" });
+  } else {
+    if (role === "therapist") {
+      if (!fullName) {
+        res.status(400);
+        res.json({ message: "enter full name" });
+      }
     }
-  }
-  const createdUser = await userModel.create({
-    ...req.body,
-    password: hashedPassword,
-  });
+    const createdUser = await userModel.create({
+      ...req.body,
+      password: hashedPassword,
+    });
 
-  res.json({
-    createdUser,
-    role,
-    id: createdUser._id,
-    token: generateToken(createdUser._id),
-  });
+    res.json({
+      createdUser,
+      role,
+      id: createdUser._id,
+      token: generateToken(createdUser._id),
+    });
+  }
 });
 
 export const getUserByID = asyncHandler(async (req, res) => {
   const user = await userModel.findById(req.params.id);
   if (!user) {
     res.status(400);
-    throw new Error("User not found");
+    res.json({ message: "User not found" });
   }
   res.json({ user });
 });
